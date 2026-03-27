@@ -1,19 +1,17 @@
 {
-  "name": "superpowers-extended-cc-marketplace",
-  "description": "Marketplace for Superpowers Extended CC - Claude Code-specific enhancements",
+  "name": "ai-dev-harness-marketplace",
+  "description": "AI Development Harness - project-level orchestration + session-level execution discipline",
   "owner": {
-    "name": "pcvelz",
-    "email": "pcvelz@users.noreply.github.com"
+    "name": "aaawhhy"
   },
   "plugins": [
     {
-      "name": "superpowers-extended-cc",
-      "description": "Claude Code-specific fork of Superpowers with native task management and CC-specific enhancements",
-      "version": "5.2.3",
+      "name": "ai-dev-harness",
+      "description": "AI Development Harness - project-level orchestration + session-level execution discipline for AI-driven development",
+      "version": "0.1.0",
       "source": "./",
       "author": {
-        "name": "pcvelz",
-        "email": "pcvelz@users.noreply.github.com"
+        "name": "aaawhhy"
       }
     }
   ]
