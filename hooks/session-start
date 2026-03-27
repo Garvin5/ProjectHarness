@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SessionStart hook for superpowers plugin
+# SessionStart hook for AI Development Harness
 
 set -euo pipefail
 
@@ -11,15 +11,13 @@ PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 warning_message=""
 legacy_skills_dir="${HOME}/.config/superpowers/skills"
 if [ -d "$legacy_skills_dir" ]; then
-    warning_message="\n\n<important-reminder>IN YOUR FIRST REPLY AFTER SEEING THIS MESSAGE YOU MUST TELL THE USER:⚠️ **WARNING:** Superpowers now uses Claude Code's skills system. Custom skills in ~/.config/superpowers/skills will not be read. Move custom skills to ~/.claude/skills instead. To make this message go away, remove ~/.config/superpowers/skills</important-reminder>"
+    warning_message="\n\n<important-reminder>IN YOUR FIRST REPLY AFTER SEEING THIS MESSAGE YOU MUST TELL THE USER:⚠️ **WARNING:** This harness now uses Claude Code's skills system. Custom skills in ~/.config/superpowers/skills will not be read. Move custom skills to ~/.claude/skills instead. To make this message go away, remove ~/.config/superpowers/skills</important-reminder>"
 fi
 
-# Read using-superpowers content
-using_superpowers_content=$(cat "${PLUGIN_ROOT}/skills/using-superpowers/SKILL.md" 2>&1 || echo "Error reading using-superpowers skill")
+# Read using-harness content
+using_harness_content=$(cat "${PLUGIN_ROOT}/skills/using-harness/SKILL.md" 2>&1 || echo "Error reading using-harness skill")
 
 # Escape string for JSON embedding using bash parameter substitution.
-# Each ${s//old/new} is a single C-level pass - orders of magnitude
-# faster than the character-by-character loop this replaces.
 escape_for_json() {
     local s="$1"
     s="${s//\\/\\\\}"
@@ -30,27 +28,41 @@ escape_for_json() {
     printf '%s' "$s"
 }
 
-using_superpowers_escaped=$(escape_for_json "$using_superpowers_content")
+using_harness_escaped=$(escape_for_json "$using_harness_content")
 warning_escaped=$(escape_for_json "$warning_message")
-session_context="<EXTREMELY_IMPORTANT>\nYou have superpowers.\n\n**Below is the full content of your 'superpowers-extended-cc:using-superpowers' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${using_superpowers_escaped}\n\n${warning_escaped}\n</EXTREMELY_IMPORTANT>"
+
+# Build harness project context if docs/project exists
+harness_context=""
+project_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+
+if [ -f "${project_root}/docs/project/.current-work.md" ]; then
+    current_work=$(cat "${project_root}/docs/project/.current-work.md" 2>/dev/null || echo "")
+    current_work_escaped=$(escape_for_json "$current_work")
+    harness_context="${harness_context}\n\n<current-work>\n${current_work_escaped}\n</current-work>"
+fi
+
+if [ -f "${project_root}/docs/project/roadmap.md" ]; then
+    # Inject just the first 80 lines (milestones + top modules) as summary
+    roadmap_summary=$(head -80 "${project_root}/docs/project/roadmap.md" 2>/dev/null || echo "")
+    roadmap_escaped=$(escape_for_json "$roadmap_summary")
+    harness_context="${harness_context}\n\n<roadmap-summary>\n${roadmap_escaped}\n</roadmap-summary>"
+fi
+
+if [ -f "${project_root}/docs/project/architecture.md" ]; then
+    # Inject architecture section headers as a map
+    arch_summary=$(grep -E '^#{1,3} ' "${project_root}/docs/project/architecture.md" 2>/dev/null || echo "")
+    arch_escaped=$(escape_for_json "$arch_summary")
+    harness_context="${harness_context}\n\n<architecture-outline>\n${arch_escaped}\n</architecture-outline>"
+fi
+
+session_context="<EXTREMELY_IMPORTANT>\nYou have an AI Development Harness installed.\n\n**Below is the full content of your 'using-harness' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${using_harness_escaped}\n\n${warning_escaped}${harness_context}\n</EXTREMELY_IMPORTANT>"
 
 # Output context injection as JSON.
-# Cursor hooks expect additional_context.
-# Claude Code hooks expect hookSpecificOutput.additionalContext.
-# Claude Code reads BOTH fields without deduplication, so we must only
-# emit the field consumed by the current platform to avoid double injection.
-#
-# Uses printf instead of heredoc (cat <<EOF) to work around a bash 5.3+
-# bug where heredoc variable expansion hangs when content exceeds ~512 bytes.
-# See: https://github.com/obra/superpowers/issues/571
 if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
-  # Cursor sets CURSOR_PLUGIN_ROOT (may also set CLAUDE_PLUGIN_ROOT) — emit additional_context
   printf '{\n  "additional_context": "%s"\n}\n' "$session_context"
 elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
-  # Claude Code sets CLAUDE_PLUGIN_ROOT — emit only hookSpecificOutput
   printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context"
 else
-  # Other platforms — emit additional_context as fallback
   printf '{\n  "additional_context": "%s"\n}\n' "$session_context"
 fi
 

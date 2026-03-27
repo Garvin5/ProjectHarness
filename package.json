@@ -1,6 +1,6 @@
 {
-  "name": "superpowers",
-  "version": "5.0.6",
+  "name": "ai-dev-harness",
+  "version": "0.1.0",
   "type": "module",
-  "main": ".opencode/plugins/superpowers.js"
+  "license": "MIT"
 }

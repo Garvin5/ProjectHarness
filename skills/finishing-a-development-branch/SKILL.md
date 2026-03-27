@@ -190,6 +190,28 @@ git worktree remove <worktree-path>
 - Get typed confirmation for Option 4
 - Clean up worktree for Options 1 & 4 only
 
+## Step 6: Harness Flow-Back
+
+**This step runs after Options 1, 2, or 3 (not Option 4/discard).**
+
+If `docs/project/.current-work.md` exists, execute the project-done flow:
+
+1. Read `.current-work.md` to identify the completed work item (ID, type, module)
+2. Update `docs/project/roadmap.md` — mark the item as complete (type-appropriate marker)
+3. Update the exec-plan in `docs/project/exec-plans/active/{module}.md` — mark status, record date and branch
+4. Generate or update `docs/project/specs/{domain}/{name}.md` — describe what was ACTUALLY built (read the implementation to write an accurate spec)
+5. Update `docs/project/assets/manifest.md` if `.current-work.md` had asset entries
+6. Refresh affected CLAUDE.md files per `shared/claude-md-convention.md`
+7. Delete `docs/project/.current-work.md`
+8. Check module/milestone completion:
+   - Module done? → move exec-plan to `completed/`, update module status
+   - Milestone reached? → notify user, suggest tagging
+9. Recommend next work items (same logic as project-next: find ready items, sort by priority)
+
+**If `.current-work.md` does NOT exist:** Skip this step entirely. Behavior is identical to original Superpowers.
+
+**If the user chose Option 3 (keep as-is):** Still run the flow-back if the work is functionally complete, even though the branch stays. The harness state should reflect reality.
+
 ## Integration
 
 **Called by:**
@@ -198,3 +220,11 @@ git worktree remove <worktree-path>
 
 **Pairs with:**
 - **using-git-worktrees** - Cleans up worktree created by that skill
+- **project-done** - Step 6 above is equivalent to invoking project-done inline
+
+## References
+
+- `shared/golden-principles.md` — invariants to maintain during flow-back
+- `shared/claude-md-convention.md` — CLAUDE.md refresh rules
+- `shared/work-item-types.md` — type-specific completion markers
+- `shared/file-structure.md` — where files go

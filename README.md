@@ -1,248 +1,154 @@
-# Superpowers Extended for Claude Code
+# AI Development Harness
 
-A community-maintained fork of [obra/superpowers](https://github.com/obra/superpowers) specifically for Claude Code users.
+From a one-sentence idea to a deliverable product. A complete AI-driven development framework that covers the full lifecycle: project planning, feature execution, quality assurance, and continuous evolution.
 
-## Why This Fork Exists
+Built on [pcvelz/superpowers](https://github.com/pcvelz/superpowers) (session-level execution discipline), extended with project-level orchestration inspired by [Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) (spec management) and [OpenAI's Harness engineering](https://openai.com/index/harness-engineering/) (agent-first development practices).
 
-The original Superpowers is designed as a cross-platform toolkit that works across multiple AI CLI tools (Claude Code, Codex, OpenCode, Gemini CLI). Features unique to Claude Code fall outside the scope of the upstream project due to its [cross-platform nature](https://github.com/obra/superpowers/pull/344#issuecomment-3795515617).
+## What It Does
 
-This fork integrates Claude Code-native features into the Superpowers workflow.
+```
+"Build a 4v4 multiplayer shooter"
+        |
+        v
+  /project-init     --> vision.md + roadmap.md + architecture.md
+        |
+        v
+  /project-next     --> pick feature, prepare context
+        |
+        v
+  brainstorming      --> design the feature
+  writing-plans      --> create implementation plan
+  verification       --> TDD / playtest / experiment / contract-test / ...
+  finish-branch      --> merge + auto flow-back to project state
+        |
+        v
+  /project-done      --> update roadmap, generate spec, recommend next
+        |
+        v
+  repeat until milestone reached
+```
 
-### What We Do Differently
+## Two Layers
 
-- Leverage Claude Code-native features as they're released
-- Community-driven - contributions welcome for any CC-specific enhancement
-- Track upstream - stay compatible with obra/superpowers core workflow
+**Project Orchestration** (new) -- decides WHAT to work on:
+- `/project-init` -- from one sentence to structured project (greenfield + brownfield)
+- `/project-next` -- select next work item, prepare execution context
+- `/project-status` -- milestone/module/feature progress at a glance
+- `/project-replan` -- add/remove/reprioritize features dynamically
+- `/project-health` -- consistency checks, spec coverage, architecture drift
+- `/project-done` -- completion flow-back, spec generation, CLAUDE.md refresh
 
-### Current Enhancements
+**Execution Discipline** (from Superpowers, adapted) -- decides HOW to build it:
+- `brainstorming` -- collaborative design with harness context awareness
+- `writing-plans` -- implementation plans with pluggable verification strategies
+- `verification` -- TDD by default, 8 strategies total (playtest, experiment-eval, contract-test, ...)
+- `finishing-a-development-branch` -- merge/PR + automatic project state update
+- `subagent-driven-development`, `executing-plans`, `systematic-debugging`, `code-review`, `git-worktrees`
 
-| Feature | Claude Code Version | Description |
-|---------|---------------------|-------------|
-| Native Task Management | v2.1.16+ | Dependency tracking, real-time progress visibility |
-| Structured Task Metadata | v2.1.16+ | Goal/Files/AC/Verify structure with embedded `json:metadata` |
-| Pre-commit Task Gate | v2.1.16+ | Plugin hook blocks `git commit` when tasks are incomplete |
+## Key Design Decisions
 
-## Visual Comparison
+**6 work item types** -- not everything is a feature: `feat`, `infra`, `spike`, `migration`, `experiment`, `ops`. Each has its own lifecycle.
 
-<table>
-<tr>
-<th>Superpowers (Vanilla)</th>
-<th>Superpowers Extended CC</th>
-</tr>
-<tr>
-<td valign="top">
+**Pluggable verification** -- TDD is great for libraries and backends. Games need playtesting. ML needs experiment evaluation. Embedded needs hardware-in-loop. The harness adapts.
 
-![Vanilla](docs/screenshots/vanilla-session.png)
+**File system is state** -- all project state lives in `docs/project/` as markdown. Git-friendly, human-readable, human-editable. No database.
 
-- Tasks exist only in markdown plan
-- No runtime task visibility
-- Agent may jump ahead or skip tasks
-- Progress tracked manually by reading output
+**CLAUDE.md is derived** -- never hand-written. Root CLAUDE.md is a navigation table. Subdirectory CLAUDE.md files are derived from architecture + specs.
 
-</td>
-<td valign="top">
-
-![Extended CC](docs/screenshots/extended-cc-session.png)
-
-- **Dependency enforcement** - Task 2 blocked until Task 1 completes (no front-running)
-- **Execution on rails** - Native task manager keeps agent following the plan
-- **Real-time visibility** - User sees actual progress with pending/in_progress/completed states
-- **Session-aware** - TaskList shows what's done, what's blocked, what's next
-
-</td>
-</tr>
-</table>
+**Backward compatible** -- if `docs/project/` doesn't exist, the harness behaves identically to original Superpowers.
 
 ## Installation
 
-### Option 1: Via Marketplace (recommended)
+This is a Claude Code plugin. Skills and hooks are automatically discovered -- no manual symlinks or settings.json edits needed.
+
+### From GitHub
 
 ```bash
-# Register marketplace
-/plugin marketplace add pcvelz/superpowers
-
-# Install plugin
-/plugin install superpowers-extended-cc@superpowers-extended-cc-marketplace
+/plugin marketplace add Garvin5/ProjectHarness
+/plugin install ai-dev-harness@Garvin5-ProjectHarness
 ```
 
-### Option 2: Direct URL
+### From a Local Clone
 
 ```bash
-/plugin install --source url https://github.com/pcvelz/superpowers.git
+git clone https://github.com/Garvin5/ProjectHarness.git
+
+# Load for current session (development/testing)
+claude --plugin-dir ./ProjectHarness
+
+# Or install persistently
+/plugin marketplace add ./ProjectHarness
+/plugin install ai-dev-harness
 ```
 
-### Verify Installation
-
-Check that commands appear:
+### Installation Scope
 
 ```bash
-/help
+/plugin install ai-dev-harness --scope user      # Personal use across projects (default)
+/plugin install ai-dev-harness --scope project   # Shared with team via .claude/settings.json
+/plugin install ai-dev-harness --scope local     # Project-only, gitignored
 ```
 
-```
-# Should see:
-# /superpowers-extended-cc:brainstorming - Interactive design refinement
-# /superpowers-extended-cc:writing-plans - Create implementation plan
-# /superpowers-extended-cc:executing-plans - Execute plan in batches
-```
-
-## The Basic Workflow
-
-1. **brainstorming** - Activates before writing code. Refines rough ideas through questions, explores alternatives, presents design in sections for validation. Saves design document.
-
-2. **using-git-worktrees** - Activates after design approval. Creates isolated workspace on new branch, runs project setup, verifies clean test baseline.
-
-3. **writing-plans** - Activates with approved design. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps. *Creates native tasks with dependencies.*
-
-4. **subagent-driven-development** or **executing-plans** - Activates with plan. Dispatches fresh subagent per task with two-stage review (spec compliance, then code quality), or executes in batches with human checkpoints.
-
-5. **test-driven-development** - Activates during implementation. Enforces RED-GREEN-REFACTOR: write failing test, watch it fail, write minimal code, watch it pass, commit. Deletes code written before tests.
-
-6. **requesting-code-review** - Activates between tasks. Reviews against plan, reports issues by severity. Critical issues block progress.
-
-7. **finishing-a-development-branch** - Activates when tasks complete. Verifies tests, presents options (merge/PR/keep/discard), cleans up worktree.
-
-**The agent checks for relevant skills before any task.** Mandatory workflows, not suggestions.
-
-## How Native Tasks Work
-
-When `writing-plans` creates tasks, each task carries structured metadata that survives across sessions and subagent dispatch:
-
-```yaml
-TaskCreate:
-  subject: "Task 1: Add price validation to optimizer"
-  description: |
-    **Goal:** Validate input prices before optimization runs.
-
-    **Files:**
-    - Modify: `src/optimizer.py:45-60`
-    - Create: `tests/test_price_validation.py`
-
-    **Acceptance Criteria:**
-    - [ ] Negative prices raise ValueError
-    - [ ] Empty price list raises ValueError
-    - [ ] Valid prices pass through unchanged
-
-    **Verify:** `pytest tests/test_price_validation.py -v`
-
-    ```json:metadata
-    {"files": ["src/optimizer.py", "tests/test_price_validation.py"],
-     "verifyCommand": "pytest tests/test_price_validation.py -v",
-     "acceptanceCriteria": ["Negative prices raise ValueError",
-       "Empty price list raises ValueError",
-       "Valid prices pass through unchanged"]}
-    ```
-```
-
-The `json:metadata` block is embedded in the description because `TaskGet` returns the description but not the `metadata` parameter. This ensures metadata is always available — for `executing-plans` verification, `subagent-driven-development` dispatch, and `.tasks.json` cross-session resume.
-
-## What's Inside
-
-### Skills Library
-
-**Testing**
-- **test-driven-development** - RED-GREEN-REFACTOR cycle (includes testing anti-patterns reference)
-
-**Debugging**
-- **systematic-debugging** - 4-phase root cause process (includes root-cause-tracing, defense-in-depth, condition-based-waiting techniques)
-- **verification-before-completion** - Ensure it's actually fixed
-
-**Collaboration**
-- **brainstorming** - Socratic design refinement + *native task creation*
-- **writing-plans** - Detailed implementation plans + *native task dependencies*
-- **executing-plans** - Batch execution with checkpoints
-- **dispatching-parallel-agents** - Concurrent subagent workflows
-- **requesting-code-review** - Pre-review checklist
-- **receiving-code-review** - Responding to feedback
-- **using-git-worktrees** - Parallel development branches
-- **finishing-a-development-branch** - Merge/PR decision workflow
-- **subagent-driven-development** - Fast iteration with two-stage review (spec compliance, then code quality)
-
-**Meta**
-- **writing-skills** - Create new skills following best practices (includes testing methodology)
-- **using-superpowers** - Introduction to the skills system
-
-## Philosophy
-
-- **Test-Driven Development** - Write tests first, always
-- **Systematic over ad-hoc** - Process over guessing
-- **Complexity reduction** - Simplicity as primary goal
-- **Evidence over claims** - Verify before declaring success
-
-Read more: [Superpowers for Claude Code](https://blog.fsck.com/2025/10/09/superpowers/)
-
-## Contributing
-
-Contributions for Claude Code-specific enhancements are welcome!
-
-1. Fork this repository
-2. Create a branch for your enhancement
-3. Follow the `writing-skills` skill for creating and testing new skills
-4. Submit a PR
-
-See `skills/writing-skills/SKILL.md` for the complete guide.
-
-## Recommended Configuration
-
-### Disable Auto Plan Mode
-
-Claude Code may automatically enter Plan mode during planning tasks, which conflicts with the structured skill workflows in this plugin. To prevent this, add `EnterPlanMode` to your permission deny list.
-
-**In your project's `.claude/settings.json`:**
-
-```json
-{
-  "permissions": {
-    "deny": ["EnterPlanMode"]
-  }
-}
-```
-
-This blocks the model from calling `EnterPlanMode`, ensuring the brainstorming and writing-plans skills operate correctly in normal mode. See [upstream discussion](https://github.com/anthropics/claude-code/issues/23384) for context.
-
-### Block Commits With Incomplete Tasks
-
-When using native tasks, the agent should not commit until all tasks are finished. This plugin includes an example hook that blocks `git commit` when tasks are still open.
-
-Add this to your `.claude/settings.local.json`:
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/plugins/marketplaces/superpowers-extended-cc-marketplace/hooks/examples/pre-commit-check-tasks.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-The hook ships with the plugin at `hooks/examples/pre-commit-check-tasks.sh`. The marketplace path is stable across versions. It parses the session transcript for `TaskCreate`/`TaskUpdate` calls and blocks `git commit` when any tasks are not completed, cancelled, or deleted. Non-commit Bash commands pass through unaffected.
-
-## Updating
-
-Skills update automatically when you update the plugin:
+### Verify
 
 ```bash
-/plugin update superpowers-extended-cc@superpowers-extended-cc-marketplace
+/plugin              # Check installed plugins
+/reload-plugins      # Reload and see loaded skills/hooks count
 ```
 
-## Upstream Compatibility
+## Quick Start
 
-This fork tracks `obra/superpowers` main branch. Changes specific to Claude Code are additive - the core workflow remains compatible.
+Start a new session in your project and say what you want to build. `/project-init` will take it from there.
+
+## Project Structure
+
+```
+harness/
+├── .claude-plugin/           # Plugin manifest
+├── skills/
+│   ├── project-init/          # Project orchestration
+│   ├── project-next/
+│   ├── project-status/
+│   ├── project-replan/
+│   ├── project-health/
+│   ├── project-done/
+│   ├── brainstorming/         # Modified: harness context awareness
+│   ├── writing-plans/         # Modified: verification strategy awareness
+│   ├── test-driven-development/  # Modified: expanded to pluggable verification
+│   ├── finishing-a-development-branch/  # Modified: auto flow-back
+│   ├── using-harness/         # Renamed from using-superpowers
+│   ├── shared/                # Cross-skill conventions
+│   │   ├── golden-principles.md
+│   │   ├── work-item-types.md
+│   │   ├── verification-strategies.md
+│   │   ├── claude-md-convention.md
+│   │   └── file-structure.md
+│   └── ... (other skills from Superpowers, unchanged)
+├── hooks/
+│   ├── session-start          # Modified: injects harness context
+│   └── pre-commit-check-tasks # Modified: harness invariant warnings
+├── docs/design/
+│   └── project-orchestrator.md  # Design document
+├── agents/
+└── tests/                     # From upstream Superpowers
+```
+
+## Upstream Tracking
+
+This fork tracks [pcvelz/superpowers](https://github.com/pcvelz/superpowers) main branch. Harness-specific changes are additive -- the core Superpowers workflow remains compatible. To sync with upstream:
+
+```bash
+git fetch upstream
+git merge upstream/main
+```
+
+## Credits
+
+- [pcvelz/superpowers](https://github.com/pcvelz/superpowers) -- session-level execution discipline (fork base)
+- [obra/superpowers](https://github.com/obra/superpowers) -- original Superpowers
+- [Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) -- spec-driven development concepts
+- [OpenAI Harness Engineering](https://openai.com/index/harness-engineering/) -- agent-first development practices
 
 ## License
 
-MIT License - see LICENSE file for details
-
-## Support
-
-- **Issues**: https://github.com/pcvelz/superpowers/issues
-- **Upstream**: https://github.com/obra/superpowers
+MIT (inherited from Superpowers)

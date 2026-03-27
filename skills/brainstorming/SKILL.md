@@ -23,15 +23,37 @@ Every project goes through this process. A todo list, a single-function utility,
 
 You MUST create a task for each of these items and complete them in order:
 
+0. **Check for harness context** — read `docs/project/.current-work.md` if it exists (see Harness Integration below)
 1. **Explore project context** — check files, docs, recent commits
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
+6. **Write design doc** — save to the exec-plan directory (see Harness Integration) or `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` (or harness exec-plan directory if `.current-work.md` exists) as fallback, and commit
 7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
 8. **User reviews written spec** — ask user to review the spec file before proceeding
 9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+
+## Harness Integration (Step 0)
+
+If `docs/project/.current-work.md` exists, read it first. It contains:
+- Work item description and acceptance criteria (or hypothesis, questions, etc. depending on type)
+- Related specs (what the system currently does in this area)
+- Architecture constraints (which domain, dependency rules, interface conventions)
+- Verification strategy (TDD, playtest, experiment-eval, etc.)
+- Asset manifest (if non-code assets are needed)
+
+**When harness context is present:**
+- Skip the "explore intent from scratch" phase. The intent is already defined.
+- Use Steps 1-3 to refine the HOW, not re-discover the WHAT.
+- Scope is bounded by `.current-work.md` — don't brainstorm beyond the work item boundary.
+- Read the related specs to understand what already exists.
+- Architecture constraints are hard requirements, not suggestions.
+- Design doc saves to `docs/project/exec-plans/active/{module}/` alongside the exec-plan, not to `docs/superpowers/specs/`.
+
+**When harness context is NOT present:**
+- Proceed normally. Full brainstorming from scratch.
+- Design doc saves to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` (or harness exec-plan directory if `.current-work.md` exists) (original behavior).
 
 ## Process Flow
 
@@ -110,7 +132,7 @@ digraph brainstorming {
 
 **Documentation:**
 
-- Write the validated design (spec) to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
+- Write the validated design (spec) to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` (or harness exec-plan directory if `.current-work.md` exists)
   - (User preferences for spec location override this default)
 - Use elements-of-style:writing-clearly-and-concisely skill if available
 - Commit the design document to git

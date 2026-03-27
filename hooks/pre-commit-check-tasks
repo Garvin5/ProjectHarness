@@ -46,5 +46,51 @@ if [[ "$OPEN_TASKS" -gt 0 ]]; then
     exit 2
 fi
 
+# --- Harness invariant checks (warnings, not blockers) ---
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+WARNINGS=""
+
+# Check 1: Spec coverage — completed features should have specs
+if [[ -f "$PROJECT_ROOT/docs/project/roadmap.md" && -d "$PROJECT_ROOT/docs/project/specs" ]]; then
+    MISSING_SPECS=$(python3 -c "
+import re, os
+roadmap = open('$PROJECT_ROOT/docs/project/roadmap.md').read()
+# Find completed feat items: - [x] F... [feat, ...]
+completed = re.findall(r'- \[x\] (F[\d.]+):.*?\[feat', roadmap)
+specs_dir = '$PROJECT_ROOT/docs/project/specs'
+spec_files = []
+for root, dirs, files in os.walk(specs_dir):
+    spec_files.extend(f for f in files if f.endswith('.md') and f != 'index.md')
+# Simple heuristic: warn if completed features outnumber spec files significantly
+if len(completed) > len(spec_files) + 2:
+    print(f'{len(completed)} completed features but only {len(spec_files)} spec files')
+else:
+    print('')
+" 2>/dev/null || echo "")
+    [[ -n "$MISSING_SPECS" ]] && WARNINGS="${WARNINGS}\n⚠️  Spec coverage: $MISSING_SPECS"
+fi
+
+# Check 2: CLAUDE.md navigation freshness
+if [[ -f "$PROJECT_ROOT/CLAUDE.md" && -d "$PROJECT_ROOT/docs/project" ]]; then
+    CLAUDE_STALE=$(python3 -c "
+claude = open('$PROJECT_ROOT/CLAUDE.md').read()
+import os
+for f in ['vision.md', 'roadmap.md', 'architecture.md']:
+    path = os.path.join('$PROJECT_ROOT/docs/project', f)
+    if os.path.exists(path) and f not in claude:
+        print(f'CLAUDE.md missing link to docs/project/{f}')
+        break
+else:
+    print('')
+" 2>/dev/null || echo "")
+    [[ -n "$CLAUDE_STALE" ]] && WARNINGS="${WARNINGS}\n⚠️  $CLAUDE_STALE"
+fi
+
+# Output warnings (non-blocking)
+if [[ -n "$WARNINGS" ]]; then
+    echo -e "Harness invariant warnings:$WARNINGS" >&2
+    echo -e "Run /project-health for full check." >&2
+fi
+
 echo '{"decision": "allow"}'
 exit 0

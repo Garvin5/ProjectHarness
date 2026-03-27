@@ -1,9 +1,35 @@
 ---
-name: test-driven-development
-description: Use when implementing any feature or bugfix, before writing implementation code
+name: verification
+description: Use when implementing any feature or bugfix, before writing implementation code. Supports multiple verification strategies — TDD by default, or the strategy declared in .current-work.md (playtest, experiment-eval, contract-test, integration-test, hardware-in-loop, visual-regression, manual-checklist).
 ---
 
-# Test-Driven Development (TDD)
+# Verification
+
+This skill adapts to the work item's declared verification strategy. TDD is the default and the most detailed strategy. Other strategies are lighter-weight.
+
+## Strategy Dispatch
+
+Read `docs/project/.current-work.md` if it exists. Check the `## Verification` field.
+
+| Verification Field | Action |
+|-------------------|--------|
+| `TDD` or not specified or no .current-work.md | Use TDD mode below (full discipline) |
+| `integration-test` | Same as TDD but tests hit real infrastructure (containers, test DB). Set up test environment first. |
+| `playtest` | Implement first, then generate a playtest checklist. No automated test requirement for subjective aspects. TDD still applies for deterministic logic within the feature. |
+| `experiment-eval` | Implement the experiment, run evaluation, compare against baseline. Record metrics. |
+| `contract-test` | Write contract tests FIRST (encoding existing behavior), then implement to satisfy them. Same red-green-refactor as TDD but tests come from existing system contracts. |
+| `hardware-in-loop` | TDD for pure logic. For hardware interaction: implement, flash, verify physically. |
+| `visual-regression` | Implement, capture screenshots, compare against baseline. TDD for logic. |
+| `manual-checklist` | Follow the checklist in .current-work.md. Mark each item as verified. |
+| Mixed (e.g., `TDD + playtest`) | TDD for deterministic parts, other strategy for subjective parts. |
+
+**For non-TDD strategies**, see `shared/verification-strategies.md` for detailed workflow.
+
+**The rest of this skill defines TDD mode** — the default and most rigorous strategy.
+
+---
+
+# TDD Mode
 
 ## Overview
 
@@ -13,9 +39,9 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
 
-## When to Use
+## When TDD Applies
 
-**Always:**
+**Always (when TDD is the strategy):**
 - New features
 - Bug fixes
 - Refactoring

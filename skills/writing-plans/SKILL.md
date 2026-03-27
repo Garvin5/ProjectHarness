@@ -19,12 +19,30 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Context:** This should be run in a dedicated worktree (created by brainstorming skill).
 
-**Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
-- (User preferences for plan location override this default)
+**Save plans to:**
+- If `docs/project/.current-work.md` exists: save to `docs/project/exec-plans/active/{module-id}/YYYY-MM-DD-{work-item-id}-plan.md`
+- Otherwise: `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
+- (User preferences for plan location override both defaults)
 
 ## Scope Check
 
 If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during brainstorming. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
+
+## Verification Strategy Awareness
+
+If `docs/project/.current-work.md` exists, read its `## Verification` field. The verification strategy shapes how you write task steps:
+
+- **TDD:** Each task follows Red → Green → Refactor. Steps include test code FIRST, then implementation. (This is the default if no strategy is specified.)
+- **integration-test:** Steps set up test infrastructure (containers, test DB), write integration tests, then implement.
+- **playtest:** Steps end with a playtest checklist instead of automated test commands. The "Verify" line describes what to check manually.
+- **experiment-eval:** Steps include metric collection and baseline comparison. The "Verify" line specifies threshold criteria.
+- **contract-test:** Steps start with contract tests derived from existing behavior, then implement to satisfy contracts.
+- **hardware-in-loop:** Steps include flash commands and physical verification procedures.
+- **visual-regression:** Steps include screenshot capture and baseline comparison.
+- **manual-checklist:** Steps end with explicit human verification checkpoints.
+- **Mixed strategies:** Some tasks use TDD (for logic), others use a different strategy (for feel/visual/hardware). Annotate each task with its strategy.
+
+See `shared/verification-strategies.md` for full strategy definitions.
 
 ## File Structure
 
@@ -71,7 +89,7 @@ Key principle: TDD cycles happen WITHIN tasks, not as separate tasks. A task is 
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-extended-cc:subagent-driven-development (recommended) or superpowers-extended-cc:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use ai-dev-harness:subagent-driven-development (if subagents available) or ai-dev-harness:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -102,7 +120,7 @@ Key principle: TDD cycles happen WITHIN tasks, not as separate tasks. A task is 
 
 **Steps:**
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Write tests for [behavior]**
 
 ```python
 def test_specific_behavior():
@@ -110,24 +128,17 @@ def test_specific_behavior():
     assert result == expected
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: FAIL with "function not defined"
-
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **Step 2: Implement [component]**
 
 ```python
 def function(input):
     return expected
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 3: Run verification and commit**
 
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: PASS
-
-- [ ] **Step 5: Commit**
+Run: `pytest tests/path/test.py -v`
+Expected: All tests PASS
 
 ```bash
 git add tests/path/test.py src/path/file.py
@@ -188,13 +199,13 @@ AskUserQuestion:
 STOP. The user has chosen an execution method. You MUST invoke the corresponding skill using the Skill tool NOW. Do NOT implement tasks yourself — do NOT read files, make edits, or update task statuses. Your ONLY permitted action is invoking the skill below.
 
 **If Subagent-Driven chosen:**
-Invoke the Skill tool: `superpowers-extended-cc:subagent-driven-development`
+Invoke the Skill tool: `ai-dev-harness:subagent-driven-development`
 - The skill handles everything: subagent dispatch, review, task tracking
 - You stay in this session as the coordinator
 - Do NOT start working on tasks directly
 
 **If Parallel Session chosen:**
-Guide the user to open a new session in the worktree, then invoke: `superpowers-extended-cc:executing-plans`
+Guide the user to open a new session in the worktree, then invoke: `ai-dev-harness:executing-plans`
 </HARD-GATE>
 
 ---
@@ -299,7 +310,7 @@ Both the plan `.md` and `.tasks.json` must be co-located in `docs/superpowers/pl
 
 Any new session can resume by running:
 ```
-/superpowers-extended-cc:executing-plans <plan-path>
+/ai-dev-harness:executing-plans <plan-path>
 ```
 
 The skill reads the `.tasks.json` file and continues from where it left off.

@@ -1,13 +1,10 @@
 {
-  "name": "superpowers-extended-cc",
-  "description": "Claude Code-specific fork of Superpowers with native task management and CC-specific enhancements",
-  "version": "5.2.3",
+  "name": "ai-dev-harness",
+  "description": "AI Development Harness - project-level orchestration + session-level execution discipline for AI-driven development",
+  "version": "0.1.0",
   "author": {
-    "name": "pcvelz",
-    "email": "pcvelz@users.noreply.github.com"
+    "name": "aaawhhy"
   },
-  "homepage": "https://github.com/pcvelz/superpowers",
-  "repository": "https://github.com/pcvelz/superpowers",
   "license": "MIT",
-  "keywords": ["skills", "tdd", "debugging", "collaboration", "best-practices", "workflows", "claude-code", "native-tasks"]
+  "keywords": ["skills", "harness", "project-orchestration", "tdd", "verification", "workflows", "claude-code", "native-tasks"]
 }
