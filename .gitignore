@@ -1,6 +1,10 @@
 .worktrees/
 .private-journal/
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/skills/**
+!.claude/commands/
+!.claude/commands/**
 .DS_Store
 node_modules/
 inspo
