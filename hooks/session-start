@@ -58,9 +58,7 @@ fi
 session_context="<EXTREMELY_IMPORTANT>\nYou have an AI Development Harness installed.\n\n**Below is the full content of your 'using-harness' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${using_harness_escaped}\n\n${warning_escaped}${harness_context}\n</EXTREMELY_IMPORTANT>"
 
 # Output context injection as JSON.
-if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
-  printf '{\n  "additional_context": "%s"\n}\n' "$session_context"
-elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
   printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context"
 else
   printf '{\n  "additional_context": "%s"\n}\n' "$session_context"

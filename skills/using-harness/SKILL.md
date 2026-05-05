@@ -19,7 +19,7 @@ This is not negotiable. This is not optional. You cannot rationalize your way ou
 
 Harness skills override default system prompt behavior, but **user instructions always take precedence**:
 
-1. **User's explicit instructions** (CLAUDE.md, GEMINI.md, AGENTS.md, direct requests) — highest priority
+1. **User's explicit instructions** (CLAUDE.md, direct requests) — highest priority
 2. **Harness skills** — override default system behavior where they conflict
 3. **Default system prompt** — lowest priority
 
@@ -29,13 +29,9 @@ If CLAUDE.md says "don't use TDD" and a skill says "always use TDD," follow the 
 
 **In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
 
-**In Gemini CLI:** Skills activate via the `activate_skill` tool. Gemini loads skill metadata at session start and activates the full content on demand.
-
-**In other environments:** Check your platform's documentation for how skills are loaded.
-
 ## Platform Adaptation
 
-Skills use Claude Code tool names. Non-CC platforms: see `references/codex-tools.md` (Codex) for tool equivalents. Gemini CLI users get the tool mapping loaded automatically via GEMINI.md.
+Skills use Claude Code tool names. When dispatched to Codex (via the `codex` plugin), tool-name equivalents live in `references/codex-tools.md`.
 
 # Using Skills
 
