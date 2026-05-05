@@ -1,0 +1,7 @@
+.version-bump.json
+AGENTS.md
+CLAUDE.md
+hooks/examples/stop-deflection-guard.sh
+scripts/bump-version.sh
+scripts/sync-to-codex-plugin.sh
+skills/using-superpowers/references/copilot-tools.md
