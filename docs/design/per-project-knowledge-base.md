@@ -196,112 +196,108 @@ Vocabulary lives at `<harness>/skills/per-project-kb/vocabulary.yaml` and is loa
 
 ## 7. Skills shipped by the harness
 
-Each skill description must encode its triggers (see §7a) so Claude lifts it autonomously. The "triggers" column below is canonical — descriptions written for these skills should mirror it precisely.
+Each skill description encodes (a) its trigger class and sub-conditions from §7a, (b) its action style (quiet vs propose-first), and (c) downstream chains.
 
-| Skill | Triggers | What it does |
-|---|---|---|
-| `register-project` | First-run in a new project; user says "register/注册 this project" | Creates `docs/knowledge/manifest.yaml`, asks user for tags, appends to `~/.claude/harness-projects.json` |
-| `survey-relevant` | Q1 (session start in registered project) | Reads registry, lists 3–5 likely-relevant entry titles from federation; no body load |
-| `consult-knowledge` | Q2 (tool/domain mention), Q3 (entering core skill), Q4 (about to recommend), Q6 (recurrence language) | Walks registry, intersects manifests, returns ranked entries, loads bodies based on `trust` |
-| `promote-to-knowledge` | W1 (imperative correction), W2 (≥3-turn bug), W3 (intra-session repeat), W4 (handoff distillation), W5 (explicit user request), W6 (reasoned decision) | Drafts frontmatter, asks user to confirm tags / freshness, writes file, calls `rebuild-index` |
-| `supersede-entry` | U3 (claim contradicted) | Writes new entry's `supersedes`, mutates old entry to `freshness: superseded`, moves old to `_superseded/`, calls `rebuild-index` |
-| `revalidate-entry` | U2 (failed application), U4 (hypothesis applied ≥3×); also `validate-knowledge` calls it | Re-confirms an entry's claims (optionally via Codex), bumps `last-validated`, may upgrade `freshness` |
-| `validate-knowledge` | Cron / `finishing-a-development-branch` postcondition | Local QA pass: stale entries, missing fields, orphan tags, broken supersedes, S1 merge candidates, S2 archive, S3 bubble-up |
-| `bubble-up-knowledge` | S3 (workflow-general entry detected); also called by `validate-knowledge` | Surfaces project-local entries that should be at harness level |
-| `redact-secrets` | PreToolUse hook on writes into `docs/knowledge/` or `docs/handoffs/`; also called inside `promote-to-knowledge` before draft | Scans for credential patterns; refuses high-confidence matches |
-| `rebuild-index` | Postcondition of `promote-to-knowledge`, `supersede-entry`, `revalidate-entry`; also called by Claude after plain-Edit content changes | Regenerates `docs/knowledge/INDEX.md` from frontmatter, stable order |
+| Skill | Class | Action style | What it does |
+|---|---|---|---|
+| `register-project` | one-shot | propose-first (asks user for tags) | Creates `docs/knowledge/manifest.yaml`, appends to `~/.claude/harness-projects.json` |
+| `survey-relevant` | Q (session-start sub-condition) | quiet (titles only, announce) | Reads registry, lists 3–5 likely-relevant entry titles from federation |
+| `consult-knowledge` | Q (in-conversation sub-conditions) | quiet (announce findings inline) | Walks registry, intersects manifests, returns ranked entries, loads bodies based on `trust` |
+| `promote-to-knowledge` | W (all sub-conditions) | propose-first | Drafts frontmatter, proposes file, on confirm writes file + calls `rebuild-index` |
+| `supersede-entry` | U (claim-contradicted sub-condition) | propose-first | On confirm: writes new entry's `supersedes`, mutates old to `freshness: superseded`, moves to `_superseded/`, calls `rebuild-index` |
+| `revalidate-entry` | U (applied-and-failed / hypothesis-stable sub-conditions) | propose-first | On confirm: re-checks claims (optionally via Codex), bumps `last-validated`, may upgrade `freshness` |
+| `validate-knowledge` | S (all sub-conditions) | propose-first batched | Local QA sweep, surfaces a list of proposed actions in one batch the user steps through |
+| `bubble-up-knowledge` | S (workflow-general sub-condition); also called by `validate-knowledge` | propose-first | Identifies project-local entries that should live at harness level |
+| `redact-secrets` | hook / inline | enforce (refuse, not propose) | PreToolUse scan for credential patterns on writes into `docs/knowledge/`. High-confidence matches block the write. |
+| `rebuild-index` | postcondition | silent | Regenerates `docs/knowledge/INDEX.md` from frontmatter, stable order |
 
 ### Trigger chains
 
-Some triggers fire skill chains. The following are canonical chains:
+Each chain begins with a trigger and ends with `rebuild-index` whenever a write occurred. Confirmation gates are explicit.
 
-- **W4 chain (handoff distillation):** `finishing-a-development-branch` → `promote-to-knowledge` (per candidate) → `redact-secrets` → `rebuild-index` → `validate-knowledge`
-- **Q-then-U1 chain (consult and confirm):** `consult-knowledge` → entry applied successfully → inline `last-validated` bump → `rebuild-index`
-- **U3 chain (supersede):** `supersede-entry` → `rebuild-index`
-- **Session-start chain (registered project):** `redact-secrets` (hook, passive) → `survey-relevant` (Q1, optional based on registry depth)
+- **Handoff distillation (W):** `finishing-a-development-branch` → propose entries → user confirms each → `redact-secrets` → write → `rebuild-index` → `validate-knowledge` for sanity
+- **Consult + apply (Q → U):** `consult-knowledge` → user/Claude applies entry → outcome observed → `revalidate-entry` proposes bump or stale → user confirms → `rebuild-index`
+- **Supersede (U):** evidence contradicts entry → `supersede-entry` proposes replacement → user confirms → write + move → `rebuild-index`
+- **Session start in registered project:** `redact-secrets` (hook, passive) → `survey-relevant` titles (announced quietly)
 
 ## 7a. Trigger map (the real entry point)
 
-CRUD framing is wrong for an AI collaborator. The user does not regularly *invoke* KB operations — Claude does, autonomously, when conversational/state events match a trigger. Skills are the surface; triggers are the logic of when each skill activates. Skill descriptions must encode these triggers precisely so Claude lifts the right skill at the right moment.
+CRUD framing is wrong for an AI collaborator. Skills are the surface; triggers are the logic that decides *when* each skill activates and what action style it uses. Skill descriptions must encode triggers precisely so Claude lifts the right skill at the right moment — and importantly, **proposes before acting** for any write, update, or archive.
 
-### Q-triggers — proactive consultation
+### Four trigger classes
 
-Claude reaches into the KB without being asked.
-
-| ID | When | Skill that fires | Result |
+| Class | Action style | What it covers | Skill(s) |
 |---|---|---|---|
-| Q1 | Session-start in a registered project | `survey-relevant` | List 3–5 likely-relevant entry titles from federation, no body load |
-| Q2 | User message contains a registered tool/domain term (cocos / ui / packaging / auth / …) | `consult-knowledge` | Walk federation, return ranked entries (R) |
-| Q3 | About to enter a core skill (`writing-plans` / `executing-plans` / `systematic-debugging`) | `consult-knowledge` filtered by skill type | Surface prior-art for that skill type (R) |
-| Q4 | About to recommend an approach | quick local-KB sniff | Check if same approach already documented (R) |
-| Q5 | Tool result indicates failure (non-zero exit, error keywords) | local `gotchas/` lookup | Match against known failure modes (R) |
-| Q6 | User language signals recurrence ("again" / "same as last time" / "上次" / "再来一次" / "像之前") | `consult-knowledge` plus local | Find the prior occurrence (R) |
+| **Q — consult** | Quiet read + announce findings | Surfacing prior knowledge that is relevant *now* | `consult-knowledge`, `survey-relevant` |
+| **W — promote** | **Propose first**, write only on confirm | Capturing new knowledge that emerged in conversation | `promote-to-knowledge` |
+| **U — update** | **Propose first**, mutate only on confirm | Adjusting existing entries' validity / freshness | `revalidate-entry`, `supersede-entry` |
+| **S — sweep** | **Propose first**, usually batched | Structural maintenance across the local KB | `validate-knowledge`, `bubble-up-knowledge` |
 
-### W-triggers — proactive write
+### Sub-conditions per class
 
-Claude promotes content into the KB without being asked.
+Skill descriptions enumerate these so Claude self-triggers correctly. Each line is a fire condition; multiple conditions in one class trigger the same skill.
 
-| ID | When | Skill that fires | Result |
-|---|---|---|---|
-| W1 | User issues an imperative correction ("不要 X" / "stop doing X" / "记住" / "remember") | `promote-to-knowledge` (type=`convention` or local feedback rule) | Create entry capturing the rule (C) |
-| W2 | A bug took ≥3 turn cycles to resolve | `promote-to-knowledge` (type=`gotcha`) | Create gotcha with provenance from the failure trace (C) |
-| W3 | The same problem surfaced twice in this session | `promote-to-knowledge` | Create with two-source provenance, mark `freshness: living` (C) |
-| W4 | Entering `finishing-a-development-branch` / handoff time | distillation pass over the session | Suggest 0–N entries; user accepts/edits/rejects (C) |
-| W5 | User explicitly says "记一下/记住/log this/入库/note this" | `promote-to-knowledge` immediately | Create with quoted rationale (C) |
-| W6 | A reasoned decision was articulated ("用 X 不用 Y 因为 Z") | `promote-to-knowledge` (type=`decision`) | Create decision entry (C) |
+**Q sub-conditions** (read is reversible — quiet, announce, no confirm needed):
+- Conversation surfaces a registered tool/domain term (cocos / ui / packaging / 鉴权 …)
+- About to plan / recommend an approach / enter `writing-plans`-class skill
+- Tool result indicates failure (non-zero exit, error keywords)
+- User language signals recurrence ("again", "上次", "再来一次", "像之前")
+- Session start in a registered project (light variant — `survey-relevant`, titles only)
 
-### U-triggers — proactive update
+**W sub-conditions** (always ask first):
+- User issues an imperative correction ("不要 X", "记住", "stop doing X") — Claude proposes, user confirms
+- Same problem surfaced ≥2 times in this session, OR a bug took ≥3 turns to resolve
+- A reasoned decision is articulated in conversation ("用 X 不用 Y 因为 Z")
+- User explicitly says "记一下/入库/note this/log this"
+- Handoff time (`finishing-a-development-branch` runs) — distillation pass surfaces 0–N candidates
 
-| ID | When | Skill that fires | Result |
-|---|---|---|---|
-| U1 | A consulted entry was applied successfully | inline last-validated bump | Update `last-validated` to today, append a successful-application note (U) |
-| U2 | A consulted entry was applied unsuccessfully | mark stale | Set `freshness: hypothesis`, flag for `revalidate-entry` (U) |
-| U3 | New evidence contradicts an entry's claim | `supersede-entry` chain | Author replacement, link supersedes (D + C) |
-| U4 | A `hypothesis` entry has been applied successfully ≥3 times | auto-promotion suggestion | Prompt user to confirm `freshness: living` (U) |
+**U sub-conditions** (always ask first):
+- A consulted entry was applied → propose bump or stale flag based on outcome
+- New evidence contradicts an entry → propose supersede chain
 
-### S-triggers — proactive structural maintenance
+**S sub-conditions** (always ask first, batched):
+- Two entries' `applies-to` overlap heavily and content rhymes → propose merge
+- An entry's `applies-to` references a tool the project no longer uses → propose archive
+- An entry's content is workflow-general (would apply to any project) → propose bubble-up to harness level
 
-| ID | When | Skill that fires | Result |
-|---|---|---|---|
-| S1 | Two entries' `applies-to` fully overlap and content is similar | merge candidate flag in `validate-knowledge` | Suggest merge or supersede (advisory) |
-| S2 | An entry's `applies-to.tools` includes a tool the project no longer uses | archive prompt | Suggest move to `_superseded/` |
-| S3 | An entry has `applies-to` matching workflow-general patterns (TDD, debugging, prompting) | `bubble-up-knowledge` | Suggest the entry belongs at the harness level, not project-local |
+### Action style: ask, don't do
+
+KB pollution is hard to reverse. A wrong entry confuses every future session across the federation. One confirmation per write is cheap; self-firing wrong writes accumulate.
+
+| Op | Action style |
+|---|---|
+| Q (read) | Quiet, announce inline ("checked B001's KB — found X about non-square PNGs"). User can interrupt to redirect. |
+| W / U / S | One-line proposal: state what was noticed, propose the action with key fields, single confirm prompt. Default to NO. |
+
+**Phrasing convention** for proposals:
+1. Trigger summary — what Claude noticed
+2. Proposed action — type, tags, freshness, target file
+3. One-line prompt: `OK / 改字段 / skip`
+
+Example:
+> 你这条"不要自己生成 .meta"的纠正这是第 3 次了。建议入 KB 作为 `convention`，tags `[cocos, asset-import]`，freshness `static`，写到 `docs/knowledge/conventions/no-self-generate-meta.md`。OK / 改字段 / skip?
 
 ### How triggers are encoded
 
-Triggers are **not implemented as runtime hooks**. Hooks fire on tool boundaries (PreToolUse, Stop, SessionStart) and have no semantic view of conversation content. Claude's skill loop *is* the enforcement mechanism: every turn Claude scans available skill descriptions and decides whether one applies. So encoding triggers reduces to **skill description engineering**:
+Triggers are NOT implemented as runtime hooks (hooks have no semantic view of conversation). Claude's skill loop is the enforcement mechanism: every turn Claude scans available skill descriptions and decides whether one applies. So encoding reduces to **skill description engineering**:
 
-1. The description must concretely list the trigger phrases / state conditions, in both English and Chinese where relevant
-2. Anti-trigger language ("do NOT use this skill when …") prevents noise activation
-3. Each skill must declare which triggers it owns and what other skills it might chain into (e.g., `promote-to-knowledge` always calls `rebuild-index` after)
+1. The description concretely lists Q/W/U/S sub-conditions (Chinese + English phrasing both)
+2. Anti-trigger language prevents noise activation ("do NOT use for one-off questions, casual chat, …")
+3. Each skill description states the action style (quiet / propose-first)
+4. Skills declare downstream chains (e.g., `promote-to-knowledge` calls `rebuild-index` on confirm)
 
-Example partial description for `consult-knowledge`:
+### CRUD as consequence
 
-> Use when (Q2) the user's message mentions a registered tool/domain term — cocos, ui, packaging, asset, auth, etc.; (Q3) before entering writing-plans / executing-plans / systematic-debugging; (Q4) before recommending an implementation approach; (Q6) when user language signals recurrence ("again", "same as last time", "上次", "再来一次").
-> Do NOT use this skill for one-off factual questions, casual chat, or when the topic obviously has no precedent in any registered project.
-
-### CRUD as consequence, not entry point
-
-CRUD operations are still real — they're just not what gets invoked. They emerge as outcomes of triggers:
-
-| Trigger class | Outcome |
-|---|---|
-| W1–W6 | Create |
-| Q1–Q6 | Read (federation or local) |
-| U1, U4 | Update (in place) |
-| U2, S1, S2 | Update (mark stale / flag merge) |
-| U3 | Delete-via-supersede + Create |
-
-Manual CRUD (user explicitly says "edit this entry" or "remove this") remains available as a fallback — Claude can do it with plain Read/Edit/Write/Glob — but it is not the design center.
+CRUD ops still happen — but as outcomes of confirmed proposals, not as direct user invocation. Manual CRUD (user types "edit this entry" or "remove this") remains a fallback path — Claude uses plain Read/Edit/Write/Glob — but it is not the design center.
 
 ### Cross-cutting plumbing
 
 | Concern | How it works |
 |---|---|
-| INDEX consistency | `rebuild-index` runs after every C/U/D-creating skill. Skill chains list it as a postcondition so Claude doesn't forget. |
+| INDEX consistency | `rebuild-index` runs as postcondition of every confirmed C/U/D op. Skill chains list it explicitly. |
 | `_superseded/` archive | Per-type subdir holds retired entries. `consult-knowledge` skips by default; opt-in flag for archaeology. |
-| Secret prevention | `redact-secrets` runs in two places: (a) PreToolUse hook scanning content about to be written to disk, (b) inside `promote-to-knowledge` before frontmatter draft. |
-| Vocabulary integrity | `validate-knowledge` warns when a tag absent from `vocabulary.yaml` is introduced; user accepts → vocabulary updated. |
+| Secret prevention | `redact-secrets` runs (a) as PreToolUse hook on writes into `docs/knowledge/`, (b) inside `promote-to-knowledge` before drafting frontmatter. |
+| Vocabulary integrity | `validate-knowledge` warns on tags absent from `vocabulary.yaml`; user accepts → vocabulary appended. |
 
 ## 8. Consultation use-cases (concrete)
 
