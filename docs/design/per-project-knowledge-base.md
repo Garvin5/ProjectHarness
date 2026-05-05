@@ -192,7 +192,7 @@ project-type:
   - personal | team | open-source
 ```
 
-Vocabulary lives at `<harness>/skills/per-project-kb/vocabulary.yaml` and is loaded by `consult-knowledge`.
+Vocabulary lives at `<harness>/skills/shared/per-project-kb/vocabulary.yaml` and is loaded by `consult-knowledge`.
 
 ## 7. Skills shipped by the harness
 
@@ -376,12 +376,12 @@ living-updated  OR  superseded
 
 This is a personal toolkit, not an iteratively-shipped product. Build everything, then exercise on B001 end-to-end. Order is logical (downstream depends on upstream), not staged-by-priority.
 
-### Phase 0 — schema artifacts
+### Phase 0 — schema artifacts ✅
 
-- [ ] `<harness>/skills/per-project-kb/vocabulary.yaml` — controlled tag list
-- [ ] `<harness>/skills/per-project-kb/manifest-template.yaml` — manifest scaffold
-- [ ] `<harness>/skills/per-project-kb/entry-template.md` — frontmatter scaffold per type
-- [ ] This design doc (already drafted) — committed alongside
+- [x] `<harness>/skills/shared/per-project-kb/vocabulary.yaml` — controlled tag list
+- [x] `<harness>/skills/shared/per-project-kb/manifest-template.yaml` — manifest scaffold
+- [x] `<harness>/skills/shared/per-project-kb/entry-template.md` — frontmatter + per-type body shapes
+- [x] This design doc — committed
 
 ### Phase 1 — primitives
 

@@ -1,0 +1,48 @@
+# docs/knowledge/manifest.yaml
+#
+# Created by the `register-project` skill the first time the harness
+# is used in this project. Lists this project's identity for cross-
+# project federation (see docs/design/per-project-knowledge-base.md).
+#
+# All tag values come from skills/shared/per-project-kb/vocabulary.yaml.
+# Unknown tags are flagged by validate-knowledge and prompted for
+# addition to the controlled vocabulary.
+
+project:
+  # Unique identifier. Kebab-case. STABLE — changing it breaks
+  # supersedes / cross-project provenance references.
+  id: <project-id>
+
+  # Human-friendly display name. Shown in survey-relevant output
+  # and in consult-knowledge's relevance summary.
+  name: <Display Name>
+
+  # Broad classification. Single value from vocabulary.yaml project-type.
+  type: <project-type>
+
+  # 1–3 sentence summary of what this project is and why it exists.
+  # Read by Claude when this project surfaces in another project's
+  # consult-knowledge run, so frame it for an outside reader.
+  description: |
+    <description>
+
+  # Tools / frameworks / languages / runtimes / platforms.
+  # All tags MUST come from vocabulary.yaml `tools`.
+  # Tag generously — these are the federation discriminator. A tool
+  # that matters but isn't tagged here will hide all this project's
+  # entries from sibling projects looking for that tool.
+  tools:
+    - <tag>
+
+  # Functional domains this project covers.
+  # All tags MUST come from vocabulary.yaml `domains`.
+  # An entry's applies-to.domains is a subset of this list.
+  domains:
+    - <tag>
+
+  # Optional. IDs of other registered projects that are reasonable
+  # precedents for this one (e.g. a sibling Cocos project, a previous
+  # iteration). consult-knowledge prioritizes related-projects when
+  # ranking relevance; leaving empty falls back to pure tag overlap.
+  related-projects:
+    - <project-id>

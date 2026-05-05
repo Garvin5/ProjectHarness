@@ -1,0 +1,169 @@
+# Per-Project KB Controlled Vocabulary
+#
+# Used by consult-knowledge and validate-knowledge skills to:
+#   - filter cross-project consultation results by tag overlap
+#   - flag unknown tags introduced by entries (prompts user to add here)
+#
+# Adding a new tag: append under the right group. validate-knowledge
+# detects orphan tags in entries / manifests and proposes addition.
+#
+# Conventions:
+#   - kebab-case throughout
+#   - prefer version-tagged forms when major-version matters
+#     (e.g. cocos-3.x distinct from cocos-2.x)
+#   - tag generously — federation matching uses tag overlap, so missing
+#     a relevant tag means a project's KB will be invisible to siblings
+
+version: 1
+
+# ---------------------------------------------------------------------
+# Tools — frameworks, languages, runtimes, platforms a project depends on.
+# A project tags every load-bearing tool in its stack.
+# ---------------------------------------------------------------------
+tools:
+  # game engines / runtime
+  - cocos-2.x
+  - cocos-3.x
+  - cocos-3.8
+  - unity
+  - godot
+  - unreal
+
+  # languages
+  - typescript
+  - javascript
+  - python
+  - go
+  - rust
+  - csharp
+  - java
+  - kotlin
+  - swift
+
+  # web frameworks
+  - react
+  - vue
+  - svelte
+  - nextjs
+  - nuxt
+
+  # mobile / desktop
+  - tauri
+  - flutter
+  - electron
+  - swiftui
+  - jetpack-compose
+
+  # platforms
+  - wechat-mini-game
+  - douyin-mini-game
+  - h5
+  - web
+  - ios
+  - android
+
+  # AI / agent stack
+  - claude-code
+  - codex
+  - openspec
+  - superpowers
+  - mcp
+
+  # tools / infra
+  - git
+  - docker
+  - bash
+  - powershell
+
+# ---------------------------------------------------------------------
+# Domains — functional / problem areas a project addresses.
+# A project may span many; an entry tags only the relevant ones.
+# ---------------------------------------------------------------------
+domains:
+  # presentation
+  - ui
+  - layout
+  - animation
+  - viewport
+  - rendering
+
+  # game-specific
+  - gameplay
+  - level-design
+  - input-handling
+  - hud
+  - audio
+
+  # backend / persistence
+  - persistence
+  - save-system
+  - migration
+  - networking
+  - api-design
+
+  # build / asset
+  - asset-import
+  - asset-pipeline
+  - packaging
+  - bundle-format
+  - build-system
+  - signing
+
+  # quality
+  - testing
+  - debugging
+  - observability
+  - performance
+  - memory
+
+  # cross-cutting
+  - i18n
+  - accessibility
+  - security
+  - secrets
+  - auth
+
+  # special workflows
+  - reverse-engineering
+  - decompilation
+  - prompt-engineering
+
+# ---------------------------------------------------------------------
+# Project type — broad classification, used for relevance ranking.
+# Pick the closest single-word descriptor for the project as a whole.
+# ---------------------------------------------------------------------
+project-type:
+  # game
+  - mini-game
+  - full-game
+  - playable-ad
+
+  # software
+  - cli-tool
+  - library
+  - service
+  - web-app
+  - mobile-app
+  - desktop-app
+
+  # work mode
+  - reverse
+  - greenfield
+  - maintenance
+
+  # ownership / scale
+  - personal
+  - team
+  - open-source
+
+# ---------------------------------------------------------------------
+# Aliases — forgiving matching during consult-knowledge intersection.
+# When a project's manifest or an entry uses a left-side term, treat
+# it as the right-side canonical tag during overlap computation.
+# Add aliases sparingly; prefer fixing the offending entry.
+# ---------------------------------------------------------------------
+aliases:
+  cocos: cocos-3.x      # bare 'cocos' resolves to current default version
+  ts: typescript
+  js: javascript
+  ai: prompt-engineering
