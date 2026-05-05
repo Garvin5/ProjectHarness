@@ -383,10 +383,10 @@ This is a personal toolkit, not an iteratively-shipped product. Build everything
 - [x] `<harness>/skills/shared/per-project-kb/entry-template.md` — frontmatter + per-type body shapes
 - [x] This design doc — committed
 
-### Phase 1 — primitives
+### Phase 1 — primitives ✅
 
-- [ ] `rebuild-index` skill — invoked by every other write skill; standalone first because it has no dependencies
-- [ ] `redact-secrets` hook — implements the PreToolUse scan of content about to land in `docs/knowledge/`. Plus an in-skill secondary scan inside `promote-to-knowledge`.
+- [x] `rebuild-index` skill (`skills/rebuild-index/`) — Node script + SKILL.md. Idempotent, stable order, graceful with malformed entries. Tested against synthetic 1-entry and 2-entry KBs including a missing-field case.
+- [x] `redact-secrets` skill (`skills/redact-secrets/`) — Node scanner + SKILL.md. Patterns: GitHub/OpenAI/Anthropic/AWS/Stripe/JWT/Slack/Google API keys + PEM private keys (high-confidence, exit 3), plus context-tagged assignments (medium, exit 2). Tested against clean text, ghp_-prefixed PAT, and the B001 `secret = "..."` shape from transcript 2d897ac6 — all classified correctly.
 
 ### Phase 2 — write path
 
