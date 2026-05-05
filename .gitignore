@@ -9,3 +9,8 @@
 node_modules/
 inspo
 triage/
+
+# Distilled transcript corpora — research inputs, not outputs.
+# May contain raw user/assistant content including secrets that the
+# digest reports redact but the corpus itself does not.
+docs/research/*-distilled/
