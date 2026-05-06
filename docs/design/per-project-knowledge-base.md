@@ -388,11 +388,11 @@ This is a personal toolkit, not an iteratively-shipped product. Build everything
 - [x] `rebuild-index` skill (`skills/rebuild-index/`) — Node script + SKILL.md. Idempotent, stable order, graceful with malformed entries. Tested against synthetic 1-entry and 2-entry KBs including a missing-field case.
 - [x] `redact-secrets` skill (`skills/redact-secrets/`) — Node scanner + SKILL.md. Patterns: GitHub/OpenAI/Anthropic/AWS/Stripe/JWT/Slack/Google API keys + PEM private keys (high-confidence, exit 3), plus context-tagged assignments (medium, exit 2). Tested against clean text, ghp_-prefixed PAT, and the B001 `secret = "..."` shape from transcript 2d897ac6 — all classified correctly.
 
-### Phase 2 — write path
+### Phase 2 — write path ✅
 
-- [ ] `register-project` skill — manifest bootstrap + registry append. Asks user for tags from controlled vocabulary.
-- [ ] `promote-to-knowledge` skill — full C path. Encodes W1–W6 triggers in description. Drafts frontmatter, asks user to confirm tags / freshness, writes file, calls `rebuild-index`.
-- [ ] `supersede-entry` skill — full D-via-supersede. Mutates old entry's freshness, moves to `_superseded/`, writes new entry's `supersedes` link, calls `rebuild-index`.
+- [x] `register-project` skill — SKILL.md drives the propose-first input gathering; helper `scripts/register-project.mjs` writes manifest + atomically appends to `~/.claude/harness-projects.json` (refuses duplicate ids, supports `--force-replace`).
+- [x] `promote-to-knowledge` skill — SKILL.md only (no helper); fully encodes W class sub-conditions in description, mandates secret scan + rebuild-index in procedure, includes type→directory mapping.
+- [x] `supersede-entry` skill — SKILL.md + `scripts/supersede-entry.mjs`. Helper does atomic 4-step mutation (write new → mutate old frontmatter in place → move old to `_superseded/` → rebuild-index) with rollback on failure. Verified end-to-end with synthetic project; old entry shows `freshness: superseded` + `superseded-by` backlink, INDEX hides it but tallies. Bug fixed mid-Phase: rebuild-index `applies-to` parser was using `\Z` (not a JS regex anchor) — replaced with positive-indented-block regex.
 
 ### Phase 3 — read path
 

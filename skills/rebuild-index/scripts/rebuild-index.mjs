@@ -57,12 +57,14 @@ function listField(fm, key) {
 }
 
 // Parse `applies-to.<sub>` — the field is a nested object whose value is
-// either a list block or an inline list.
+// either a list block or an inline list. Capture every indented line
+// (≥1 leading space/tab + non-whitespace) until the first non-indented
+// line OR end of frontmatter.
 function appliesTo(fm, sub) {
-  const m = fm.match(/^applies-to:\s*\n([\s\S]*?)(?=^\S|\Z)/m);
+  const m = fm.match(/^applies-to:\s*\n((?:[ \t]+\S.*\n?)+)/m);
   if (!m) return [];
   const block = m[1];
-  return listField(block.replace(/^  /gm, ''), sub);
+  return listField(block.replace(/^[ \t]+/gm, ''), sub);
 }
 
 function extractTitle(content) {
