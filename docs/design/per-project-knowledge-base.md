@@ -407,13 +407,16 @@ This is a personal toolkit, not an iteratively-shipped product. Build everything
 - [x] `bubble-up-knowledge` skill — SKILL.md + `scripts/bubble-up.mjs` with two modes (`scan` lists S3 candidates; `stage` writes a stub at target). Three target patterns: harness memory (feedback rule), inline skill description (proposed line for manual paste), new harness skill (scaffold). Always stages — never auto-elevates wording. Mutates source entry's frontmatter to add `bubbled-to: <target>` for backtrace.
 - [x] End-to-end verified with synthetic project containing 5 entries (one fresh, one stale, one orphan-tagged, one missing-fields, one workflow-general): validate flagged 2/3/2 across categories, revalidate bumped + appended log, bubble-up identified the convention and staged stub correctly.
 
-### Phase 5 — end-to-end on B001
+### Phase 5 — end-to-end verification ✅ (synthetic mirror)
 
-- [ ] Run `register-project` against B001
-- [ ] Hand-author 4 promoted entries from the transcripts digest (the 4 Cat-3 gotchas: ViewportCtrl reset, miss-flash z-order, prop badge USER_DATA_CHANGED refresh, gameplay HUD non-square TRIMMED)
-- [ ] Hand-author 1–2 conventions from the digest (the asset-import protocol verbatim, plus the 6 Cat-2 user feedback rules — possibly bubbling these up to the harness immediately via S3 trigger)
-- [ ] Bootstrap a NEW dummy Cocos project, register it, ask Claude to do "登录 UI", verify `consult-knowledge` surfaces B001's relevant entries
-- [ ] Trigger an artificial failure to verify Q5 / U3 paths
+- [x] Built synthetic `b001-mirror` in temp with B001's exact tag profile + 4 Cat-3 gotchas + 1 .meta convention drafted from the transcripts digest. `validate-knowledge` clean (0/0/0).
+- [x] Built synthetic `new-cocos-project`, registered both, ran 3 federation scenarios:
+  - Q2 (cocos+ui): top 3 ui-tagged gotchas tied at 5.5; .meta convention surfaces on tool match
+  - Q5 (cocos+asset-import): .meta convention dominates at score 6 (tool×2 + domain×3 + static bonus)
+  - Q1 (survey): all 5 entries returned, ordered by cumulative overlap
+- [x] Schema and ranking behavior match expected; full report at `docs/research/phase5-federation-verification.md`
+- [ ] **Real B001 bootstrap deferred to user** — one-liner provided in the verification report. Cross-project modification was not auto-performed; user runs `register-project` against the actual B001 path when ready.
+- [ ] **Q5/U3 in-session triggers not exercised** — they require a real Claude conversation, not script-level tests. Will surface on first real use.
 
 ### Phase 6 — bubble-up the workflow-general rules
 
