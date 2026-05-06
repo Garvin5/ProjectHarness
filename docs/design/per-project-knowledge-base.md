@@ -400,11 +400,12 @@ This is a personal toolkit, not an iteratively-shipped product. Build everything
 - [x] `survey-relevant` skill — SKILL.md only; reuses `consult.mjs --mode survey`. One-shot at session start. Quiet output: titles + tags inline, no prompts, no bodies. Suppresses output entirely on zero matches (no per-session noise).
 - [x] End-to-end verified: synthetic 2-project federation, project B asks about cocos+ui → returns project A's PNG TRIMMED gotcha (score 5.5); survey from B without explicit query → returns 2 entries from A; cocos-3.8 vs cocos-3.x relation noted as a candidate vocabulary refinement (deferred).
 
-### Phase 4 — maintenance
+### Phase 4 — maintenance ✅
 
-- [ ] `revalidate-entry` skill — U2 / U4 triggers. Walks an entry, optionally dispatches Codex to verify claims, bumps `last-validated`, optionally upgrades `freshness`.
-- [ ] `validate-knowledge` skill — periodic local QA. Stale entries, missing fields, orphan tags, broken supersedes chains, S1 merge candidates, S2 archive prompts, S3 bubble-up flags.
-- [ ] `bubble-up-knowledge` skill — S3 trigger detector. Surfaces project-local entries that should live at the harness level.
+- [x] `revalidate-entry` skill — SKILL.md + `scripts/revalidate-entry.mjs`. Procedure documents type-specific verification strategies (gotcha → re-create symptom; ground-truth → re-fetch source; etc.) and recommends Codex offload for code/source verification. Helper mutates frontmatter (last-validated, freshness) and optionally appends an Application log section, then triggers rebuild-index. Refuses to operate on `freshness: superseded` entries.
+- [x] `validate-knowledge` skill — SKILL.md + `scripts/validate-knowledge.mjs`. Categorizes findings as errors / warnings / candidates and renders batched proposal. Detection: missing required frontmatter fields, malformed YAML, empty provenance, invalid freshness, stale (>90d for living, >30d for hypothesis, configurable), orphan tags vs. vocabulary, broken supersedes chains, S1 merge (jaccard ≥0.8 on tools+domains and ≥0.5 on title words), S2 archive (entry tools no longer in manifest), S3 bubble-up (empty/meta-only tools + workflow-general domains + no project-specific paths in body).
+- [x] `bubble-up-knowledge` skill — SKILL.md + `scripts/bubble-up.mjs` with two modes (`scan` lists S3 candidates; `stage` writes a stub at target). Three target patterns: harness memory (feedback rule), inline skill description (proposed line for manual paste), new harness skill (scaffold). Always stages — never auto-elevates wording. Mutates source entry's frontmatter to add `bubbled-to: <target>` for backtrace.
+- [x] End-to-end verified with synthetic project containing 5 entries (one fresh, one stale, one orphan-tagged, one missing-fields, one workflow-general): validate flagged 2/3/2 across categories, revalidate bumped + appended log, bubble-up identified the convention and staged stub correctly.
 
 ### Phase 5 — end-to-end on B001
 
