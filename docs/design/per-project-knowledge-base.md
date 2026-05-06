@@ -394,10 +394,11 @@ This is a personal toolkit, not an iteratively-shipped product. Build everything
 - [x] `promote-to-knowledge` skill — SKILL.md only (no helper); fully encodes W class sub-conditions in description, mandates secret scan + rebuild-index in procedure, includes type→directory mapping.
 - [x] `supersede-entry` skill — SKILL.md + `scripts/supersede-entry.mjs`. Helper does atomic 4-step mutation (write new → mutate old frontmatter in place → move old to `_superseded/` → rebuild-index) with rollback on failure. Verified end-to-end with synthetic project; old entry shows `freshness: superseded` + `superseded-by` backlink, INDEX hides it but tallies. Bug fixed mid-Phase: rebuild-index `applies-to` parser was using `\Z` (not a JS regex anchor) — replaced with positive-indented-block regex.
 
-### Phase 3 — read path
+### Phase 3 — read path ✅
 
-- [ ] `consult-knowledge` skill — federation walk. Encodes Q2–Q6 triggers. Reads registry, intersects manifests, ranks by tag overlap + recency + successful-application count. Returns ranked summary; loads bodies based on `trust` level.
-- [ ] `survey-relevant` skill — light Q1 trigger. Lists candidate titles at session-start in registered projects without loading bodies.
+- [x] `consult-knowledge` skill — SKILL.md + shared `scripts/consult.mjs`. Walks `~/.claude/harness-projects.json`, reads each registered project's `manifest.yaml` and KB entries, normalizes tags via `vocabulary.yaml` aliases, intersects on tools + domains, scores `(toolHits×2 + domainHits×3 + freshnessBonus)`, returns ranked JSON. Three modes: `summary` (default, no body), `full` (bodies included for `trust: full` projects, ≤4KB inline cap), `survey` (lower threshold, used by survey-relevant). Self-exclusion of current project. `freshness: superseded` skipped.
+- [x] `survey-relevant` skill — SKILL.md only; reuses `consult.mjs --mode survey`. One-shot at session start. Quiet output: titles + tags inline, no prompts, no bodies. Suppresses output entirely on zero matches (no per-session noise).
+- [x] End-to-end verified: synthetic 2-project federation, project B asks about cocos+ui → returns project A's PNG TRIMMED gotcha (score 5.5); survey from B without explicit query → returns 2 entries from A; cocos-3.8 vs cocos-3.x relation noted as a candidate vocabulary refinement (deferred).
 
 ### Phase 4 — maintenance
 
