@@ -418,9 +418,14 @@ This is a personal toolkit, not an iteratively-shipped product. Build everything
 - [ ] **Real B001 bootstrap deferred to user** — one-liner provided in the verification report. Cross-project modification was not auto-performed; user runs `register-project` against the actual B001 path when ready.
 - [ ] **Q5/U3 in-session triggers not exercised** — they require a real Claude conversation, not script-level tests. Will surface on first real use.
 
-### Phase 6 — bubble-up the workflow-general rules
+### Phase 6 — bubble-up the workflow-general rules ✅
 
-- [ ] Move the 6 Cat-2 user pushback patterns and 6 Cat-5 collaboration-mode signals from B001's KB up to ProjectHarness as feedback memories (these are not project-specific)
+- [x] Re-classified the 12 Cat-2/Cat-5 rules from the transcripts digest before bubbling. Outcome:
+  - **5 truly workflow-general** (apply to any project) → harness feedback memory at `~/.claude/projects/D--Repo-ProjectHarness/memory/feedback_*.md`: recommended-option, autonomous-checkpoint, no-substitute-workaround, distinctive-handoff-names, obvious-fix-no-interrupt
+  - **6 mode-limited** (apply when condition holds) → same harness memory location, with `**Apply when:** ...` line at top of body: full-fidelity-restoration (reverse/mirror/port projects only), validate-real-target (editor + build-target engines), reference-project-no-leak (when references in use), gui-runtime-checklist (GUI/runtime work), screenshot-driven (visual projects), staged-structure-then-art (art-asset phases)
+  - **1 Cocos-specific** (Cat-2 #4 no-self-generate-meta) → kept in B001's `docs/knowledge/conventions/`, not bubbled
+- [x] MEMORY.md index updated — 13 entries total (2 pre-existing + 11 new), grouped by `Truly workflow-general` and `Mode-limited`
+- [x] Each file has `type: feedback` frontmatter + body following the harness memory format (rule statement, **Why:**, **How to apply:**, **Provenance:** with session list)
 
 ### Plain file ops not in the buildout
 
