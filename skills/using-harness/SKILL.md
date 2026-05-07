@@ -112,6 +112,8 @@ When multiple skills could apply, use this order:
 "How's the project going?" → project-status.
 "We need to change the plan" → project-replan.
 "Is everything consistent?" → project-health.
+"差不多了 / 要走了 / 收工 / wrap up / context 快满了" → closing-session.
+"update / refresh harness / 拉一下 harness / 这里看不到新写的 skill" → update-harness.
 
 ## Skill Types
 
